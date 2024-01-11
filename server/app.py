@@ -35,7 +35,11 @@ def baked_goods_by_price():
 @app.route('/baked_goods/most_expensive', methods=['GET'])
 def most_expensive_baked_good():
     baked_good = BakedGood.query.order_by(BakedGood.price.desc()).first()
-    return jsonify(baked_good.serialize())
+
+    if baked_good:
+        return jsonify(baked_good.serialize())
+    else:
+        return jsonify({"message": "No baked goods found", "status_code": 404}), 404
 
 if __name__ == '__main__':
     app.run(debug=True)
