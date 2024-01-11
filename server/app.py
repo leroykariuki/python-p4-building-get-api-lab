@@ -1,38 +1,41 @@
-#!/usr/bin/env python3
-
-from flask import Flask, make_response, jsonify
-from flask_migrate import Migrate
-
-from models import db, Bakery, BakedGood
+# app.py
+from flask import Flask, jsonify
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.json.compact = False
+db = SQLAlchemy(app)
 
-migrate = Migrate(app, db)
+# Import models after initializing db
+from models import Bakery, BakedGood
 
-db.init_app(app)
+# Create tables
+with app.app_context():
+    db.create_all()
 
-@app.route('/')
-def index():
-    return '<h1>Bakery GET API</h1>'
+# Routes
 
-@app.route('/bakeries')
+@app.route('/bakeries', methods=['GET'])
 def bakeries():
-    return ''
+    with app.app_context():
+        bakeries = Bakery.query.all()
+        return jsonify([bakery.serialize() for bakery in bakeries])
 
-@app.route('/bakeries/<int:id>')
+@app.route('/bakeries/<int:id>', methods=['GET'])
 def bakery_by_id(id):
-    return ''
+    bakery = Bakery.query.get_or_404(id)
+    return jsonify(bakery.serialize())
 
-@app.route('/baked_goods/by_price')
+@app.route('/baked_goods/by_price', methods=['GET'])
 def baked_goods_by_price():
-    return ''
+    baked_goods = BakedGood.query.order_by(BakedGood.price.desc()).all()
+    return jsonify([baked_good.serialize() for baked_good in baked_goods])
 
-@app.route('/baked_goods/most_expensive')
+@app.route('/baked_goods/most_expensive', methods=['GET'])
 def most_expensive_baked_good():
-    return ''
+    baked_good = BakedGood.query.order_by(BakedGood.price.desc()).first()
+    return jsonify(baked_good.serialize())
 
 if __name__ == '__main__':
-    app.run(port=5555, debug=True)
+    app.run(debug=True)
